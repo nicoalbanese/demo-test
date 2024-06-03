@@ -26,6 +26,7 @@ export default function Chat() {
       ))}
 
       <form
+        onSubmit={() => setInput("")}
         action={async () => {
           const newMessages: CoreMessage[] = [
             ...messages,
@@ -33,7 +34,6 @@ export default function Chat() {
           ];
 
           setMessages(newMessages);
-          setInput("");
 
           const result = await continueConversation(newMessages);
           setData(result.data);
