@@ -1,12 +1,16 @@
 "use client";
 
 import { CoreMessage } from "ai";
-import { useState } from "react";
+import { useOptimistic, useState } from "react";
 import { continueConversation } from "../actions";
 import { readStreamableValue } from "ai/rsc";
 
 export const Chat = () => {
   const [messages, setMessages] = useState<CoreMessage[]>([]);
+  const [optimisticMessages, setOptimsticMessages] = useOptimistic<
+    CoreMessage[]
+  >([]);
+  const [optimisticInput, setOptimsticInput] = useOptimistic("");
   const [input, setInput] = useState("");
   const [data, setData] = useState<any>();
 
@@ -14,7 +18,7 @@ export const Chat = () => {
     <main>
       <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
         {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
-        {messages.map((m, i) => (
+        {(optimisticMessages || messages).map((m, i) => (
           <div key={i} className="whitespace-pre-wrap">
             {m.role === "user" ? "User: " : "AI: "}
             {m.content as string}
@@ -22,19 +26,13 @@ export const Chat = () => {
         ))}
 
         <form
-          onSubmit={() => {
-            const newMessages: CoreMessage[] = [
-              ...messages,
-              { content: input, role: "user" },
-            ];
-            setMessages(newMessages);
-            setInput("");
-          }}
           action={async () => {
+            setOptimsticInput("");
             const newMessages: CoreMessage[] = [
               ...messages,
               { content: input, role: "user" },
             ];
+            setOptimsticMessages(newMessages);
 
             const result = await continueConversation(newMessages);
             setData(result.data);
@@ -52,7 +50,7 @@ export const Chat = () => {
         >
           <input
             className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
-            value={input}
+            value={optimisticInput || input}
             placeholder="Say something..."
             onChange={(e) => setInput(e.target.value)}
           />
